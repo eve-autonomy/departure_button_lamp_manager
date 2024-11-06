@@ -13,4 +13,3 @@ This node controls departure LED lamp for logistics workers turough `/dio_ros_dr
     - `/dio/dout4`  \[[dio_ros_driver/msg/DIOPort](https://github.com/tier4/dio_ros_driver/blob/develop/ros2/msg/DIOPort.msg)\]:<br>GPIO output topic for departure lamp. (this topic is remapping from button_lamp_out)
 ## Node Graph
 
-
