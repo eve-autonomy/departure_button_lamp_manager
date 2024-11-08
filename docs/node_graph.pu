@@ -1,0 +1,11 @@
+@startuml
+
+usecase "/autoware_state_machine"
+usecase "/departure_button_lamp_manager" #LightCoral
+usecase "/dio_ros_driver"
+
+(/autoware_state_machine) -> (/departure_button_lamp_manager) : /autoware_state_machine/state
+
+(/departure_button_lamp_manager) -> (/dio_ros_driver) : /dio/dout4
+
+@enduml
