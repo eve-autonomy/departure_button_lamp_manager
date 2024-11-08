@@ -14,3 +14,4 @@ This node controls departure LED lamp for logistics workers turough `/dio_ros_dr
 ## Node Graph
 
 [node graph](docs/node_graph.pu)
+
