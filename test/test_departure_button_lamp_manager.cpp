@@ -76,16 +76,39 @@ protected:
 
 TEST_F(DepartureButtonLampManagerTest, TestAllStateCombinations)
 {
-    const std::vector<uint16_t> service_states = {
-        0, 100, 101, 102, 200, 201, 250, 300, 301, 302, 303, 304, 305, 
-        306, 307, 402, 403, 404, 450, 500, 600
+    const std::vector<ServiceState> service_states = {
+        STATE_UNDEFINED,
+        STATE_DURING_WAKEUP,
+        STATE_DURING_CLOSE,
+        STATE_CHECK_NODE_ALIVE,
+        STATE_DURING_RECEIVE_ROUTE,
+        STATE_WAITING_ENGAGE_INSTRUCTION,
+        STATE_WAITING_CALL_PERMISSION,
+        STATE_RUNNING,
+        STATE_INFORM_ENGAGE,
+        STATE_RUNNING_TOWARD_STOP_LINE,
+        STATE_RUNNING_TOWARD_OBSTACLE,
+        STATE_INSTRUCT_ENGAGE,
+        STATE_TURNING_LEFT,
+        STATE_TURNING_RIGHT,
+        STATE_DURING_OBSTACLE_AVOIDANCE,
+        STATE_STOP_DUETO_TRAFFIC_CONDITION,
+        STATE_STOP_DUETO_APPROACHING_OBSTACLE,
+        STATE_STOP_DUETO_SURROUNDING_PROXIMITY,
+        STATE_INFORM_RESTART,
+        STATE_ARRIVED_GOAL,
+        STATE_EMERGENCY_STOP
     };
-    const std::vector<uint8_t> control_states = {0, 1};
+
+    const std::vector<ControlState> control_states = {
+        MANUAL, 
+        AUTO
+    };
 
     for (auto service_state : service_states) {
         for (auto control_state : control_states) {
-            bool expected_value = !(service_state == 201 && control_state == 1);
-            sendAndCheckMessage(service_state, control_state, expected_value);
+            bool expected_value = !(service_state == STATE_WAITING_ENGAGE_INSTRUCTION && control_state == AUTO);
+            sendAndCheckMessage(static_cast<uint16_t>(service_state), static_cast<uint8_t>(control_state), expected_value);
         }
     }
 }
