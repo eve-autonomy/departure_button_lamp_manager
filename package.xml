@@ -19,7 +19,7 @@
   <name>departure_button_lamp_manager</name>
   <version>0.0.0</version>
   <description>The departure_button_lamp_manager package</description>
-  <maintainer email="riku.kimura@tier4.jp">rikukimura</maintainer>
+  <maintainer email="yuma.nihei@eveautonomy.com">yuma hihei</maintainer>
   <license>Apache Licence 2.0</license>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
