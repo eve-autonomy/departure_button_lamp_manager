@@ -15,20 +15,20 @@
 #ifndef DEPARTURE_BUTTON_LAMP_MANAGER__DEPARTURE_BUTTON_LAMP_MANAGER_HPP_
 #define DEPARTURE_BUTTON_LAMP_MANAGER__DEPARTURE_BUTTON_LAMP_MANAGER_HPP_
 
-#include "rclcpp/rclcpp.hpp"
 #include "autoware_state_machine_msgs/msg/state_machine.hpp"
 #include "dio_ros_driver/msg/dio_port.hpp"
+#include "rclcpp/rclcpp.hpp"
 
 namespace departure_button_lamp_manager
 {
 class DepartureButtonLampManager : public rclcpp::Node
 {
 public:
-  explicit DepartureButtonLampManager (const rclcpp::NodeOptions & options);
+  explicit DepartureButtonLampManager(const rclcpp::NodeOptions & options);
   ~DepartureButtonLampManager();
 
 private:
-  #define ACTIVE_POLARITY (false)
+#define ACTIVE_POLARITY (false)
 
   // Publisher
   rclcpp::Publisher<dio_ros_driver::msg::DIOPort>::SharedPtr pub_departure_button_lamp_;
@@ -44,5 +44,5 @@ private:
   void lampManager(const uint16_t service_layer_state, const uint8_t control_layer_state);
 };
 
-}  // namespace departurre_button_lamp_manager
+}  // namespace departure_button_lamp_manager
 #endif  // DEPARTURE_BUTTON_LAMP_MANAGER__DEPARTURE_BUTTON_LAMP_MANAGER_HPP_
