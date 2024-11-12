@@ -14,4 +14,5 @@ This node controls departure LED lamp for logistics workers turough `/dio_ros_dr
 ## Node Graph
 
 [node graph](docs/node_graph.pu)
+![node graph](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/eve-autonomy/departure_button_lamp_manager/main/docs/node_graph.pu
 
