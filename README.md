@@ -13,6 +13,5 @@ This node controls departure LED lamp for logistics workers turough `/dio_ros_dr
     - `/dio/dout4`  \[[dio_ros_driver/msg/DIOPort](https://github.com/tier4/dio_ros_driver/blob/develop/ros2/msg/DIOPort.msg)\]:<br>GPIO output topic for departure lamp. (this topic is remapping from button_lamp_out)
 ## Node Graph
 
-[node graph](docs/node_graph.pu)
 ![node graph](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/eve-autonomy/departure_button_lamp_manager/main/docs/node_graph.pu
 
