@@ -115,3 +115,4 @@ TEST_F(DepartureButtonLampManagerTest, TestAllStateCombinations)
       }
     }
   }
+}
