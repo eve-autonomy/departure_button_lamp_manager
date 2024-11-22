@@ -80,7 +80,51 @@ jobs:
             --mixin coverage-gcc coverage-pytest compile-commands
           mv /etc/nsswitch.conf.bak /etc/nsswitch.conf
           cat /etc/nsswitch.conf
-        
+          echo  "finished building"
+          
+      - name: Test
+        if: ${{ steps.get-self-packages.outputs.self-packages != '' }}
+        env:
+          rosdistro: ${{ matrix.rosdistro }}
+          target-packages: ${{ steps.get-self-packages.outputs.self-packages }}
+          build-depends-repos: ${{ matrix.build-depends-repos }}
+        shell: bash
+        run: |
+          echo "Running tests for target packages: ${{ env.target-packages }}"
+          . /opt/ros/${{ env.rosdistro }}/setup.sh
+
+          # Initialize lcov counters
+          colcon lcov-result --zero-counters --verbose --packages-above ${{ env.target-packages }}
+
+          # Generate initial lcov results
+          colcon lcov-result --initial --verbose --packages-above ${{ env.target-packages }}
+
+          # Run tests with coverage mixin
+          colcon test --event-handlers console_cohesion+ \
+            --mixin coverage-pytest \
+            --packages-above ${{ env.target-packages }} \
+            --executor sequential \
+            --return-code-on-test-failure
+
+          # Generate lcov results and filter test files
+          colcon lcov-result --verbose --filter "*/test/*" --packages-above ${{ env.target-packages }} || true
+
+          # Generate coverage.py results
+          colcon coveragepy-result --verbose --packages-above ${{ env.target-packages }} || true
+
+          # Check if coverage reports exist
+          if [ -f lcov/total_coverage.info ]; then
+            echo "lcov coverage report generated: lcov/total_coverage.info"
+          else
+            echo "No lcov coverage report found."
+          fi
+
+          if [ -f coveragepy/.coverage ]; then
+            echo "coverage.py report generated: coveragepy/.coverage"
+          else
+            echo "No coverage.py report found."
+          fi
+
 
       - name: Upload coverage to CodeCov
         if: ${{ steps.test.outputs.coverage-report-files != '' }}
