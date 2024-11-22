@@ -1,51 +1,95 @@
-name: test_and_build
+name: build-and-test
 
 on:
-  pull_request:
-    branches:
-      - "main"
-    workflow_dispatch:
+  push:
+  schedule:
+    - cron: 0 0 * * *
+  workflow_dispatch:
 
 jobs:
-  test_environment:
-    runs-on: [ubuntu-latest]
+  build-and-test:
+    if: ${{ github.event_name != 'push' || github.ref_name == github.event.repository.default_branch }}
+    runs-on: ubuntu-22.04
+    container: 
+      image: ros:humble
     strategy:
       fail-fast: false
       matrix:
-        ros_distribution:
-          - galactic
-          - rolling
+        rosdistro:
+          - humble
         include:
-          # Galactic Geochelone (May 2021 - November 2022)
-          - docker_image: rostooling/setup-ros-docker:ubuntu-focal-ros-galactic-ros-base-latest
-            ros_distribution: galactic
-            ros_version: 2
-          # Rolling Ridley  (June 2020 - Present)
-          - docker_image: rostooling/setup-ros-docker:ubuntu-focal-ros-rolling-ros-base-latest
-            ros_distribution: rolling
-            ros_version: 2
-    container:
-      image: ${{ matrix.docker_image }}
+          - rosdistro: humble
+            container: ros:humble
+            build-depends-repos: build_depends.repos
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
+      - name: Check out repository
+        uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          fetch-depth: 1
 
-      - name: Search packages in this repository
-        id: list_packages
+      - name: Show disk space before the tasks
+        run: df -h
+
+      - name: Remove exec_depend
+        uses: autowarefoundation/autoware-github-actions/remove-exec-depend@v1
+
+      - name: Get self packages
+        id: get-self-packages
+        uses: autowarefoundation/autoware-github-actions/get-self-packages@v1
+
+      - name: Build
+        if: ${{ steps.get-self-packages.outputs.self-packages != '' }}
+        env:
+          rosdistro: ${{ matrix.rosdistro }}
+          target-packages: ${{ steps.get-self-packages.outputs.self-packages }}
+          build-depends-repos: ${{ matrix.build-depends-repos }}
+          build-pre-commands: sudo apt install libboost-filesystem-dev libboost-thread-dev
+        shell: bash
         run: |
-          echo ::set-output name=package_list::$(colcon list --names-only)
+          echo "target packages: ${{ env.target-packages }}"
+          shopt -s extglob
+          mkdir -p ./dependency_ws/build_pkg
+          cp -r !(dependency_ws) ./dependency_ws/build_pkg
+          rm -rf !(dependency_ws)
+          sudo apt-get -yqq update
+          sudo apt-get -yqq install python3-pip libboost-system-dev
+          if [ "${{ env.build-depends-repos }}" != "" ]; then
+            git config --global url."https://${{ secrets.GITHUB_TOKEN }}@github.com/".insteadOf "https://github.com/"
+            vcs import ./dependency_ws < ./dependency_ws/build_pkg/${{ env.build-depends-repos }}
+          fi
+          package_paths=$(colcon list -p --packages-above-and-dependencies ${{ env.target-packages }} --base-paths . dependency_ws)
+          sudo apt-get -yqq update
+          if [ "${{ env.include-eol-distros }}" = "true" ]; then
+            rosdep update --include-eol-distros
+          else
+            rosdep update
+          fi
+          DEBIAN_FRONTEND=noninteractive rosdep install -yqq --from-paths ${package_paths} --ignore-src --rosdistro ${{ env.rosdistro }}
+          colcon mixin add default https://raw.githubusercontent.com/colcon/colcon-mixin-repository/master/index.yaml || true
+          colcon mixin update default
+          . /opt/ros/${{ env.rosdistro }}/setup.sh
+          cat /etc/nsswitch.conf
+          sed -e 's#hosts:\(.*\)dns\(.*\)#hosts:\1\2#g' -i.bak /etc/nsswitch.conf
+          cat /etc/nsswitch.conf
+          MAKEFLAGS="${{ env.makeflags }}"
+          echo "MAKEFLAGS=$MAKEFLAGS"  # for debugging
+          ${{ env.build-pre-command }} colcon build ${{ env.colcon-parallel-workers-flag }} \
+            --event-handlers console_cohesion+ \
+            --packages-above-and-dependencies ${{ env.target-packages }} \
+            --cmake-args -DCMAKE_BUILD_TYPE=${{ env.cmake-build-type }} \
+            --mixin coverage-gcc coverage-pytest compile-commands
+          mv /etc/nsswitch.conf.bak /etc/nsswitch.conf
+          cat /etc/nsswitch.conf
+        
 
-      - name: Setup ROS environment
-        uses: ros-tooling/setup-ros@v0.2
+      - name: Upload coverage to CodeCov
+        if: ${{ steps.test.outputs.coverage-report-files != '' }}
+        uses: codecov/codecov-action@v4
         with:
-          required-ros-distributions: ${{ matrix.ros_distribution }}
+          files: ${{ steps.test.outputs.coverage-report-files }}
+          fail_ci_if_error: false
+          verbose: true
+          flags: total
 
-      - name: build and test
-        uses: ros-tooling/action-ros-ci@v0.2
-        with:
-          package-name: ${{ steps.list_packages.outputs.package_list }}
-          target-ros2-distro: ${{ matrix.ros_distribution }}
-          vcs-repo-file-url: build_depends.repos
-          import-token: ${{ secrets.REPO_TOKEN }}
+      - name: Show disk space after the tasks
+        run: df -h
