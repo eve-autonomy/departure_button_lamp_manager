@@ -1,9 +1,8 @@
 name: build-and-test
 
 on:
+  push:
   pull_request:
-  schedule:
-    - cron: 0 0 * * *
   workflow_dispatch:
 
 jobs:
@@ -33,7 +32,7 @@ jobs:
       - name: Get self packages
         id: get-self-packages
         uses: autowarefoundation/autoware-github-actions/get-self-packages@v1
-        
+
       - name: Update package list and install dependencies
         run: |
           apt-get update -yqq
