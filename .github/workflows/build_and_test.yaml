@@ -33,11 +33,12 @@ jobs:
       - name: Get self packages
         id: get-self-packages
         uses: autowarefoundation/autoware-github-actions/get-self-packages@v1
+        
       - name: Update package list and install dependencies
         run: |
           apt-get update -yqq
           apt-get install -yqq python3-pip libboost-system-dev libboost-filesystem-dev libboost-thread-dev
-          
+
       - name: Build
         if: ${{ steps.get-self-packages.outputs.self-packages != '' }}
         uses: autowarefoundation/autoware-github-actions/colcon-build@v1
