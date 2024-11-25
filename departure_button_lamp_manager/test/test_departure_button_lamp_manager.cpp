@@ -101,7 +101,7 @@ TEST_F(DepartureButtonLampManagerTest, TestAllStateCombinations)
     };
 
     const std::vector<uint8_t> control_states = {
-      StateMachine::MANUAL, 
+      StateMachine::MANUAL,
       StateMachine::AUTO
     };
 
