@@ -28,17 +28,6 @@
 
 - [ ] Code follows [coding guidelines][coding-guidelines]
 - [ ] Assign PR to reviewer
-- [ ] (If you added new repositories to `.repos`) set permissions for each repository.
-      You need to add the following permissions to each github team in the new repository according to [this][repository-permission-setting-flow].
-  - READ:
-    - eve-autonomy
-    - group_x1_sim
-    - eva-mapIV
-    - ex-fae
-  - WRITE:
-    - full-time-employee
-    - group_x1_dev
-    - group-tech-support
 
 ## Checklist for the PR Reviewer
 
@@ -64,11 +53,7 @@
 - **vcs import**: Required to pass before the merge.
 - **Check spelling**: NOT required to pass before the merge. It is up to the reviewer(s). See [here][spell-check-dict] if you want to add some words to the spell check dictionary.
 
-[coding-guidelines]: https://tier4.atlassian.net/wiki/spaces/AIP/pages/1194394777/T4
-[release-notes]: https://tier4.atlassian.net/wiki/spaces/AIP/pages/563774416
 [spell-check-dict]: https://github.com/tier4/autoware-spell-check-dict#how-to-contribute
 
 <!-- Additional links -->
 
-[github-repository-status]: https://docs.google.com/spreadsheets/d/13L1kVWpU5aI_sQIRCR_xk-DuVAK-B4lqkY_xAPWJ-MY/edit#gid=0
-[repository-permission-setting-flow]: https://tier4.atlassian.net/wiki/spaces/T4MANUALS/pages/930546509/GitHub+Flow
