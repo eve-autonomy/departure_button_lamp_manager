@@ -1,0 +1,86 @@
+# This is required for Continuous Integration for Autoware using the simulator
+# and remote update (Over The Air update) to real cars.
+# If you have any additional questions, please contact us at #tier4-dev channel.
+
+version: 2
+
+artifacts:
+  - name: main
+    build:
+      type: tier4/universe/main/amd64/v1
+      environment_variables:
+        PARAMETER_VEHICLE_OFFSET: src/autoware/individual_params/edit_config/vehicle_offset.yaml
+        ECU_SYSTEM_SETUP_ANSIBLE_PLAYBOOK: src/ecu_system_setup/x1.yml
+
+simulations:
+  - name: planning_sim_v2
+    type: planning_sim_v2
+    simulator:
+      deployment:
+        type: container
+        artifact: main
+      runtime:
+        type: simulator/standard1/amd64/medium
+        cpu: 8
+        memory: 16384
+      parameters:
+        vehicle_model: ymc_golfcart_m0
+        sensor_model: aip_x1
+        autoware_launch_package: autoware_launch
+        autoware_launch_file: planning_simulator.launch.xml
+        architecture_type: awf/universe
+        initialize_duration: "90"
+
+  - name: obstacle_detection
+    type: obstacle_detection
+    simulator:
+      deployment:
+        type: container
+        artifact: main
+      runtime:
+        type: simulator/standard1/amd64/medium
+        cpu: 8
+        memory: 16384
+
+  - name: ndt_convergence
+    type: ndt_convergence
+    simulator:
+      deployment:
+        type: container
+        artifact: main
+      runtime:
+        type: simulator/standard1/amd64/medium
+        cpu: 8
+        memory: 16384
+
+  - name: localization
+    type: localization
+    simulator:
+      deployment:
+        type: container
+        artifact: main
+      runtime:
+        type: simulator/standard1/amd64/medium
+        cpu: 8
+        memory: 16384
+
+  - name: obstacle_segmentation
+    type: obstacle_segmentation
+    simulator:
+      deployment:
+        type: container
+        artifact: main
+      runtime:
+        type: simulator/standard1/amd64/medium
+        cpu: 8
+        memory: 16384
+
+release:
+  components:
+    - name: autoware
+      deployment:
+        type: rootfs
+        artifact: main
+      alternative_deployments:
+        - type: installer
+          artifact: main
