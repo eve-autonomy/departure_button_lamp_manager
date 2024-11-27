@@ -1,6 +1,6 @@
 site_name: Autoware Documentation
-site_url: https://tier4.github.io/autoware.proj
-repo_url: https://github.com/tier4/autoware.proj
+site_url: https://autowarefoundation.github.io/autoware-documentation/main/
+repo_url: https://github.com/autowarefoundation/autoware-documentation
 edit_uri: edit/main/docs
 docs_dir: docs
 theme:
