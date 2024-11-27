@@ -9,6 +9,9 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.ref }}
 
       - name: Run spell-check
         uses: autowarefoundation/autoware-github-actions/spell-check@v1
