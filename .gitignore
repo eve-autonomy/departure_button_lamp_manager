@@ -38,7 +38,6 @@ ENV/
 
 # Autoware Resources
 *.pcd
-*.bag
 *.csv
 
 /.metadata/
@@ -47,7 +46,6 @@ ENV/
 build/
 install/
 log/
-
 
 # cspell
 .cspell.json
