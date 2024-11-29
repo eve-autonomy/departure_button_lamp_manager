@@ -29,9 +29,6 @@ __pycache__/
 .idea/
 cmake-build-debug/
 
-# ROSBag files
-*.bag
-
 # Environments
 .env
 .venv
@@ -41,7 +38,6 @@ ENV/
 
 # Autoware Resources
 *.pcd
-*.bag
 *.csv
 
 /.metadata/
@@ -50,13 +46,6 @@ ENV/
 build/
 install/
 log/
-
-# catkin
-build/
-devel/
-install/
-logs/
-.catkin_tools/
 
 # cspell
 .cspell.json
