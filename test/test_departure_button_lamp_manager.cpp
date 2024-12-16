@@ -65,6 +65,8 @@ protected:
     EXPECT_EQ(actual_value, expected_value)
       << "service_state=" << service_state << ", control_state=" << control_state
       << ", expected=" << expected_value << ", actual=" << actual_value;
+    std::cout << "service_layer_state: " << msg.service_layer_state << std::endl;
+    std::cout << "control_layer_state: " << static_cast<int>(msg.control_layer_state) << std::endl;
   }
 
   rclcpp::Node::SharedPtr node_;
@@ -105,6 +107,8 @@ TEST_F(DepartureButtonLampManagerTest, TestAllStateCombinations)
       StateMachine::AUTO
     };
 
+    // check all state combinations
+    std::cout << "normal test start" << std::endl;
     for (auto service_state : service_states) {
       for (auto control_state : control_states) {
         bool expected_value =
@@ -114,4 +118,33 @@ TEST_F(DepartureButtonLampManagerTest, TestAllStateCombinations)
           expected_value);
       }
     }
+
+    // check specific state combinations
+    auto previous_service_state = StateMachine::STATE_WAITING_ENGAGE_INSTRUCTION;
+    std::cout << "specific test start" << std::endl;
+    for (auto service_state : service_states) {
+      for (auto control_state : control_states) {
+
+        bool previous_expected_value =
+          !(previous_service_state == StateMachine::STATE_WAITING_ENGAGE_INSTRUCTION && control_state == StateMachine::AUTO);
+        
+        bool expected_value =
+          !(service_state == StateMachine::STATE_WAITING_CALL_PERMISSION && control_state == StateMachine::AUTO);
+        if (service_state == StateMachine::STATE_WAITING_ENGAGE_INSTRUCTION && control_state == StateMachine::AUTO){
+          expected_value = false;
+        }
+        // error handling
+        sendAndCheckMessage(
+          static_cast<uint16_t>(previous_service_state), static_cast<uint8_t>(control_state),
+          previous_expected_value);
+        
+        // for STATE_WAITING_CALL_PERMISSION 
+        sendAndCheckMessage(
+          static_cast<uint16_t>(service_state), static_cast<uint8_t>(control_state),
+          expected_value);
+          
+      }
+    }
+
   }
+}
