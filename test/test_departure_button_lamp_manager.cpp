@@ -108,7 +108,8 @@ TEST_F(DepartureButtonLampManagerTest, TestAllStateCombinations)
     for (auto service_state : service_states) {
       for (auto control_state : control_states) {
         bool expected_value =
-          !(service_state == StateMachine::STATE_WAITING_ENGAGE_INSTRUCTION && control_state == StateMachine::AUTO);
+          !((service_state == StateMachine::STATE_WAITING_ENGAGE_INSTRUCTION ||
+            service_state == StateMachine::STATE_WAITING_CALL_PERMISSION)&& control_state == StateMachine::AUTO);
         sendAndCheckMessage(
           static_cast<uint16_t>(service_state), static_cast<uint8_t>(control_state),
           expected_value);
