@@ -59,11 +59,11 @@ protected:
 
     ASSERT_FALSE(received_messages_.empty())
       << "Message not received for service_state=" << service_state
-      << ", control_state=" << control_state;
+      << ", control_state=" << static_cast<int>(control_state);
 
     bool actual_value = received_messages_.front().value;
     EXPECT_EQ(actual_value, expected_value)
-      << "service_state=" << service_state << ", control_state=" << control_state
+      << "service_state=" << service_state << ", control_state=" << static_cast<int>(control_state)
       << ", expected=" << expected_value << ", actual=" << actual_value;
     std::cout << "service_layer_state: " << msg.service_layer_state << std::endl;
     std::cout << "control_layer_state: " << static_cast<int>(msg.control_layer_state) << std::endl;
