@@ -1,0 +1,9 @@
+Checks: "
+  -*,
+  bugprone-dangling-handle"
+
+WarningsAsErrors: "*"
+
+ExtraArgs:
+  - -std=c++17
+  - -Wno-c11-extensions
