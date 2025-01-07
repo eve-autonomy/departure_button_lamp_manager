@@ -23,27 +23,27 @@
 using autoware_state_machine_msgs::msg::StateMachine;
 using dio_ros_driver::msg::DIOPort;
 
-class DepartureButtonLampManagerTest : public ::testing::Test
-{
+class DepartureButtonLampManagerTest : public ::testing::Test {
 protected:
-  void SetUp() override
-  {
+  void SetUp() override {
     rclcpp::init(0, nullptr);
-    node_ = std::make_shared<departure_button_lamp_manager::DepartureButtonLampManager>(
-      rclcpp::NodeOptions());
+    node_ = std::make_shared<
+        departure_button_lamp_manager::DepartureButtonLampManager>(
+        rclcpp::NodeOptions());
 
     auto qos = rclcpp::QoS(10).reliable().transient_local();
 
-    pub_ = node_->create_publisher<StateMachine>("autoware_state_machine/state", qos);
+    pub_ = node_->create_publisher<StateMachine>("autoware_state_machine/state",
+                                                 qos);
     sub_ = node_->create_subscription<DIOPort>(
-      "button_lamp_out", qos,
-      [this](DIOPort::SharedPtr msg) { received_messages_.push_back(*msg); });
+        "button_lamp_out", qos,
+        [this](DIOPort::SharedPtr msg) { received_messages_.push_back(*msg); });
   }
 
   void TearDown() override { rclcpp::shutdown(); }
 
-  void sendAndCheckMessage(uint16_t service_state, uint8_t control_state, bool expected_value)
-  {
+  void sendAndCheckMessage(uint16_t service_state, uint8_t control_state,
+                           bool expected_value) {
     received_messages_.clear();
 
     StateMachine msg;
@@ -53,18 +53,20 @@ protected:
 
     auto start_time = std::chrono::steady_clock::now();
     while (received_messages_.empty() &&
-           std::chrono::steady_clock::now() - start_time < std::chrono::seconds(2)) {
+           std::chrono::steady_clock::now() - start_time <
+               std::chrono::seconds(2)) {
       rclcpp::spin_some(node_);
     }
 
     ASSERT_FALSE(received_messages_.empty())
-      << "Message not received for service_state=" << service_state
-      << ", control_state=" << control_state;
+        << "Message not received for service_state=" << service_state
+        << ", control_state=" << control_state;
 
     bool actual_value = received_messages_.front().value;
     EXPECT_EQ(actual_value, expected_value)
-      << "service_state=" << service_state << ", control_state=" << control_state
-      << ", expected=" << expected_value << ", actual=" << actual_value;
+        << "service_state=" << service_state
+        << ", control_state=" << control_state
+        << ", expected=" << expected_value << ", actual=" << actual_value;
   }
 
   rclcpp::Node::SharedPtr node_;
@@ -73,46 +75,43 @@ protected:
   std::vector<DIOPort> received_messages_;
 };
 
-TEST_F(DepartureButtonLampManagerTest, TestAllStateCombinations)
-{
+TEST_F(DepartureButtonLampManagerTest, TestAllStateCombinations) {
   {
     const std::vector<uint16_t> service_states = {
-      StateMachine::STATE_UNDEFINED,
-      StateMachine::STATE_DURING_WAKEUP,
-      StateMachine::STATE_DURING_CLOSE,
-      StateMachine::STATE_CHECK_NODE_ALIVE,
-      StateMachine::STATE_DURING_RECEIVE_ROUTE,
-      StateMachine::STATE_WAITING_ENGAGE_INSTRUCTION,
-      StateMachine::STATE_WAITING_CALL_PERMISSION,
-      StateMachine::STATE_RUNNING,
-      StateMachine::STATE_INFORM_ENGAGE,
-      StateMachine::STATE_RUNNING_TOWARD_STOP_LINE,
-      StateMachine::STATE_RUNNING_TOWARD_OBSTACLE,
-      StateMachine::STATE_INSTRUCT_ENGAGE,
-      StateMachine::STATE_TURNING_LEFT,
-      StateMachine::STATE_TURNING_RIGHT,
-      StateMachine::STATE_DURING_OBSTACLE_AVOIDANCE,
-      StateMachine::STATE_STOP_DUETO_TRAFFIC_CONDITION,
-      StateMachine::STATE_STOP_DUETO_APPROACHING_OBSTACLE,
-      StateMachine::STATE_STOP_DUETO_SURROUNDING_PROXIMITY,
-      StateMachine::STATE_INFORM_RESTART,
-      StateMachine::STATE_ARRIVED_GOAL,
-      StateMachine::STATE_EMERGENCY_STOP
-    };
+        StateMachine::STATE_UNDEFINED,
+        StateMachine::STATE_DURING_WAKEUP,
+        StateMachine::STATE_DURING_CLOSE,
+        StateMachine::STATE_CHECK_NODE_ALIVE,
+        StateMachine::STATE_DURING_RECEIVE_ROUTE,
+        StateMachine::STATE_WAITING_ENGAGE_INSTRUCTION,
+        StateMachine::STATE_WAITING_CALL_PERMISSION,
+        StateMachine::STATE_RUNNING,
+        StateMachine::STATE_INFORM_ENGAGE,
+        StateMachine::STATE_RUNNING_TOWARD_STOP_LINE,
+        StateMachine::STATE_RUNNING_TOWARD_OBSTACLE,
+        StateMachine::STATE_INSTRUCT_ENGAGE,
+        StateMachine::STATE_TURNING_LEFT,
+        StateMachine::STATE_TURNING_RIGHT,
+        StateMachine::STATE_DURING_OBSTACLE_AVOIDANCE,
+        StateMachine::STATE_STOP_DUETO_TRAFFIC_CONDITION,
+        StateMachine::STATE_STOP_DUETO_APPROACHING_OBSTACLE,
+        StateMachine::STATE_STOP_DUETO_SURROUNDING_PROXIMITY,
+        StateMachine::STATE_INFORM_RESTART,
+        StateMachine::STATE_ARRIVED_GOAL,
+        StateMachine::STATE_EMERGENCY_STOP};
 
-    const std::vector<uint8_t> control_states = {
-      StateMachine::MANUAL, 
-      StateMachine::AUTO
-    };
+    const std::vector<uint8_t> control_states = {StateMachine::MANUAL,
+                                                 StateMachine::AUTO};
 
     for (auto service_state : service_states) {
       for (auto control_state : control_states) {
-        bool expected_value =
-          !((service_state == StateMachine::STATE_WAITING_ENGAGE_INSTRUCTION ||
-            service_state == StateMachine::STATE_WAITING_CALL_PERMISSION)&& control_state == StateMachine::AUTO);
-        sendAndCheckMessage(
-          static_cast<uint16_t>(service_state), static_cast<uint8_t>(control_state),
-          expected_value);
+        bool expected_value = !(
+            (service_state == StateMachine::STATE_WAITING_ENGAGE_INSTRUCTION ||
+             service_state == StateMachine::STATE_WAITING_CALL_PERMISSION) &&
+            control_state == StateMachine::AUTO);
+        sendAndCheckMessage(static_cast<uint16_t>(service_state),
+                            static_cast<uint8_t>(control_state),
+                            expected_value);
       }
     }
   }

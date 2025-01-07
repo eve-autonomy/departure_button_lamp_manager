@@ -19,30 +19,31 @@
 #include "dio_ros_driver/msg/dio_port.hpp"
 #include "rclcpp/rclcpp.hpp"
 
-namespace departure_button_lamp_manager
-{
-class DepartureButtonLampManager : public rclcpp::Node
-{
+namespace departure_button_lamp_manager {
+class DepartureButtonLampManager : public rclcpp::Node {
 public:
-  explicit DepartureButtonLampManager(const rclcpp::NodeOptions & options);
+  explicit DepartureButtonLampManager(const rclcpp::NodeOptions &options);
   ~DepartureButtonLampManager();
 
 private:
 #define ACTIVE_POLARITY (false)
 
   // Publisher
-  rclcpp::Publisher<dio_ros_driver::msg::DIOPort>::SharedPtr pub_departure_button_lamp_;
+  rclcpp::Publisher<dio_ros_driver::msg::DIOPort>::SharedPtr
+      pub_departure_button_lamp_;
 
   // Subscriber
-  rclcpp::Subscription<autoware_state_machine_msgs::msg::StateMachine>::SharedPtr sub_state_;
+  rclcpp::Subscription<
+      autoware_state_machine_msgs::msg::StateMachine>::SharedPtr sub_state_;
 
   bool active_polarity_;
 
   void callbackStateMessage(
-    const autoware_state_machine_msgs::msg::StateMachine::ConstSharedPtr msg);
+      const autoware_state_machine_msgs::msg::StateMachine::ConstSharedPtr msg);
   void publishLampState(const bool value);
-  void lampManager(const uint16_t service_layer_state, const uint8_t control_layer_state);
+  void lampManager(const uint16_t service_layer_state,
+                   const uint8_t control_layer_state);
 };
 
-}  // namespace departure_button_lamp_manager
-#endif  // DEPARTURE_BUTTON_LAMP_MANAGER__DEPARTURE_BUTTON_LAMP_MANAGER_HPP_
+} // namespace departure_button_lamp_manager
+#endif // DEPARTURE_BUTTON_LAMP_MANAGER__DEPARTURE_BUTTON_LAMP_MANAGER_HPP_
