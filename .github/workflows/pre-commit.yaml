@@ -1,0 +1,30 @@
+on:
+  pull_request:
+jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Set git config
+        uses: autowarefoundation/autoware-github-actions/set-git-config@v1
+
+      - name: Set option
+        id: set-option
+        run: |
+          if [ -z "${{ github.base_ref }}" ]; then
+            echo "option=--all-files" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          echo "option=--from-ref origin/${{ github.base_ref }} --to-ref HEAD" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: Run pre-commit
+        uses: pre-commit/action@v3.0.1
+        with:
+          extra_args: --config .pre-commit-config.yaml ${{ steps.set-option.outputs.option }}
