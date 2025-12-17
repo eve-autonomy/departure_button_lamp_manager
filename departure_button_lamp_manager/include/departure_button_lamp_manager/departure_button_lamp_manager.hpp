@@ -15,12 +15,22 @@
 #ifndef DEPARTURE_BUTTON_LAMP_MANAGER__DEPARTURE_BUTTON_LAMP_MANAGER_HPP_
 #define DEPARTURE_BUTTON_LAMP_MANAGER__DEPARTURE_BUTTON_LAMP_MANAGER_HPP_
 
-#include "autoware_state_machine_msgs/msg/state_machine.hpp"
 #include "dio_ros_driver/msg/dio_port.hpp"
 #include "rclcpp/rclcpp.hpp"
 
+// sub input
+#include "autoware_adapi_v1_msgs/msg/route_state.hpp"
+#include "autoware_adapi_v1_msgs/msg/route.hpp"
+#include "autoware_adapi_v1_msgs/msg/operation_mode_state.hpp"
+#include "eve_cmd_gate_msgs/msg/engage_request_state.hpp"
+
 namespace departure_button_lamp_manager
 {
+  using RouteState = autoware_adapi_v1_msgs::msg::RouteState;
+  using Route = autoware_adapi_v1_msgs::msg::Route;
+  using OperationModeState = autoware_adapi_v1_msgs::msg::OperationModeState;
+  using AutonomousDrivingStartButton =eve_cmd_gate_msgs::msg::EngageRequestState;
+
 class DepartureButtonLampManager : public rclcpp::Node
 {
 public:
@@ -34,14 +44,30 @@ private:
   rclcpp::Publisher<dio_ros_driver::msg::DIOPort>::SharedPtr pub_departure_button_lamp_;
 
   // Subscriber
-  rclcpp::Subscription<autoware_state_machine_msgs::msg::StateMachine>::SharedPtr sub_state_;
+  rclcpp::Subscription<RouteState>::SharedPtr sub_routing_state_;
+  rclcpp::Subscription<Route>::SharedPtr sub_routing_route_;
+  rclcpp::Subscription<OperationModeState>::SharedPtr sub_operation_mode_state_;
+  rclcpp::Subscription<AutonomousDrivingStartButton>::SharedPtr sub_autonomous_driving_start_button_;
+
+  // Callback
+  void onState(const RouteState::ConstSharedPtr msg);
+  void onRoute(const Route::ConstSharedPtr msg);
+  void onOperationModeState(const OperationModeState::ConstSharedPtr msg);
+  void onAutonomousDrivingStartButton(const AutonomousDrivingStartButton::ConstSharedPtr msg);
 
   bool active_polarity_;
 
-  void callbackStateMessage(
-    const autoware_state_machine_msgs::msg::StateMachine::ConstSharedPtr msg);
   void publishLampState(const bool value);
-  void lampManager(const uint16_t service_layer_state, const uint8_t control_layer_state);
+  void lampManager();
+
+  //member variables
+  uint16_t state_;
+  Route route_;
+  uint8_t mode_;
+  bool is_autoware_control_;
+  bool is_in_transition_;
+  bool is_accept_;
+  bool is_request_;
 };
 
 }  // namespace departure_button_lamp_manager
