@@ -14,14 +14,18 @@
 
 #include <gtest/gtest.h>
 
-#include <autoware_state_machine_msgs/msg/state_machine.hpp>
-#include <dio_ros_driver/msg/dio_port.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <dio_ros_driver/msg/dio_port.hpp>
+#include <autoware_adapi_v1_msgs/msg/route_state.hpp>
+#include <autoware_adapi_v1_msgs/msg/route.hpp>
+#include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
 
 #include "departure_button_lamp_manager/departure_button_lamp_manager.hpp"
 
-using autoware_state_machine_msgs::msg::StateMachine;
-using dio_ros_driver::msg::DIOPort;
+using RouteState = autoware_adapi_v1_msgs::msg::RouteState;
+using Route = autoware_adapi_v1_msgs::msg::Route;
+using OperationModeState = autoware_adapi_v1_msgs::msg::OperationModeState;
+using DIOPort = dio_ros_driver::msg::DIOPort;
 
 class DepartureButtonLampManagerTest : public ::testing::Test
 {
@@ -32,9 +36,12 @@ protected:
     node_ = std::make_shared<departure_button_lamp_manager::DepartureButtonLampManager>(
       rclcpp::NodeOptions());
 
-    auto qos = rclcpp::QoS(10).reliable().transient_local();
+    auto qos = rclcpp::QoS(1).reliable().transient_local();
 
-    pub_ = node_->create_publisher<StateMachine>("autoware_state_machine/state", qos);
+    pub_route_state_ = node_->create_publisher<RouteState>("/api/routing/state", qos);
+    pub_route_ = node_->create_publisher<Route>("/api/routing/route", qos);
+    pub_operation_mode_ = node_->create_publisher<OperationModeState>("/api/operation_mode/state", qos);
+
     sub_ = node_->create_subscription<DIOPort>(
       "button_lamp_out", qos,
       [this](DIOPort::SharedPtr msg) { received_messages_.push_back(*msg); });
@@ -42,78 +49,139 @@ protected:
 
   void TearDown() override { rclcpp::shutdown(); }
 
-  void sendAndCheckMessage(uint16_t service_state, uint8_t control_state, bool expected_value)
+  void spinUntilMessage()
   {
-    received_messages_.clear();
-
-    StateMachine msg;
-    msg.service_layer_state = service_state;
-    msg.control_layer_state = control_state;
-    pub_->publish(msg);
-
     auto start_time = std::chrono::steady_clock::now();
     while (received_messages_.empty() &&
            std::chrono::steady_clock::now() - start_time < std::chrono::seconds(2)) {
       rclcpp::spin_some(node_);
     }
+  }
 
-    ASSERT_FALSE(received_messages_.empty())
-      << "Message not received for service_state=" << service_state
-      << ", control_state=" << control_state;
+  void publishState(uint16_t state)
+  {
+    RouteState msg;
+    msg.state = state;
+    pub_route_state_->publish(msg);
+  }
 
-    bool actual_value = received_messages_.front().value;
-    EXPECT_EQ(actual_value, expected_value)
-      << "service_state=" << service_state << ", control_state=" << control_state
-      << ", expected=" << expected_value << ", actual=" << actual_value;
+  void publishRoute(bool has_data)
+  {
+    Route msg;
+    if (has_data) {
+      autoware_adapi_v1_msgs::msg::RouteData route_data;
+      msg.data.push_back(route_data);
+    }
+    pub_route_->publish(msg);
+  }
+
+  void publishOperationMode(bool is_autoware_control, bool is_in_transition, uint8_t mode)
+  {
+    OperationModeState msg;
+    msg.is_autoware_control_enabled = is_autoware_control;
+    msg.is_in_transition = is_in_transition;
+    msg.mode = mode;
+    pub_operation_mode_->publish(msg);
   }
 
   rclcpp::Node::SharedPtr node_;
-  rclcpp::Publisher<StateMachine>::SharedPtr pub_;
+  rclcpp::Publisher<RouteState>::SharedPtr pub_route_state_;
+  rclcpp::Publisher<Route>::SharedPtr pub_route_;
+  rclcpp::Publisher<OperationModeState>::SharedPtr pub_operation_mode_;
   rclcpp::Subscription<DIOPort>::SharedPtr sub_;
   std::vector<DIOPort> received_messages_;
 };
 
-TEST_F(DepartureButtonLampManagerTest, TestAllStateCombinations)
+// ランプが点灯する条件：
+// - state_ == RouteState::SET
+// - !route_.data.empty()
+// - is_autoware_control_
+// - !is_in_transition_
+// - mode_ != OperationModeState::AUTONOMOUS
+// ACTIVE_POLARITY = false なので、value は反転される
+
+TEST_F(DepartureButtonLampManagerTest, LampOnWhenAllConditionsMet)
 {
-  {
-    const std::vector<uint16_t> service_states = {
-      StateMachine::STATE_UNDEFINED,
-      StateMachine::STATE_DURING_WAKEUP,
-      StateMachine::STATE_DURING_CLOSE,
-      StateMachine::STATE_CHECK_NODE_ALIVE,
-      StateMachine::STATE_DURING_RECEIVE_ROUTE,
-      StateMachine::STATE_WAITING_ENGAGE_INSTRUCTION,
-      StateMachine::STATE_WAITING_CALL_PERMISSION,
-      StateMachine::STATE_RUNNING,
-      StateMachine::STATE_INFORM_ENGAGE,
-      StateMachine::STATE_RUNNING_TOWARD_STOP_LINE,
-      StateMachine::STATE_RUNNING_TOWARD_OBSTACLE,
-      StateMachine::STATE_INSTRUCT_ENGAGE,
-      StateMachine::STATE_TURNING_LEFT,
-      StateMachine::STATE_TURNING_RIGHT,
-      StateMachine::STATE_DURING_OBSTACLE_AVOIDANCE,
-      StateMachine::STATE_STOP_DUETO_TRAFFIC_CONDITION,
-      StateMachine::STATE_STOP_DUETO_APPROACHING_OBSTACLE,
-      StateMachine::STATE_STOP_DUETO_SURROUNDING_PROXIMITY,
-      StateMachine::STATE_INFORM_RESTART,
-      StateMachine::STATE_ARRIVED_GOAL,
-      StateMachine::STATE_EMERGENCY_STOP
-    };
+  received_messages_.clear();
 
-    const std::vector<uint8_t> control_states = {
-      StateMachine::MANUAL, 
-      StateMachine::AUTO
-    };
+  publishRoute(true);
+  publishOperationMode(true, false, OperationModeState::STOP);
+  publishState(RouteState::SET);
 
-    for (auto service_state : service_states) {
-      for (auto control_state : control_states) {
-        bool expected_value =
-          !((service_state == StateMachine::STATE_WAITING_ENGAGE_INSTRUCTION ||
-            service_state == StateMachine::STATE_WAITING_CALL_PERMISSION)&& control_state == StateMachine::AUTO);
-        sendAndCheckMessage(
-          static_cast<uint16_t>(service_state), static_cast<uint8_t>(control_state),
-          expected_value);
-      }
-    }
-  }
+  spinUntilMessage();
+
+  ASSERT_FALSE(received_messages_.empty());
+  // ACTIVE_POLARITY = false なので、is_ready=true のとき value=false
+  EXPECT_FALSE(received_messages_.back().value);
+}
+
+TEST_F(DepartureButtonLampManagerTest, LampOffWhenRouteNotSet)
+{
+  received_messages_.clear();
+
+  publishRoute(true);
+  publishOperationMode(true, false, OperationModeState::STOP);
+  publishState(RouteState::UNSET);
+
+  spinUntilMessage();
+
+  ASSERT_FALSE(received_messages_.empty());
+  // ACTIVE_POLARITY = false なので、is_ready=false のとき value=true
+  EXPECT_TRUE(received_messages_.back().value);
+}
+
+TEST_F(DepartureButtonLampManagerTest, LampOffWhenRouteEmpty)
+{
+  received_messages_.clear();
+
+  publishRoute(false);
+  publishOperationMode(true, false, OperationModeState::STOP);
+  publishState(RouteState::SET);
+
+  spinUntilMessage();
+
+  ASSERT_FALSE(received_messages_.empty());
+  EXPECT_TRUE(received_messages_.back().value);
+}
+
+TEST_F(DepartureButtonLampManagerTest, LampOffWhenNotAutowareControl)
+{
+  received_messages_.clear();
+
+  publishRoute(true);
+  publishOperationMode(false, false, OperationModeState::STOP);
+  publishState(RouteState::SET);
+
+  spinUntilMessage();
+
+  ASSERT_FALSE(received_messages_.empty());
+  EXPECT_TRUE(received_messages_.back().value);
+}
+
+TEST_F(DepartureButtonLampManagerTest, LampOffWhenInTransition)
+{
+  received_messages_.clear();
+
+  publishRoute(true);
+  publishOperationMode(true, true, OperationModeState::STOP);
+  publishState(RouteState::SET);
+
+  spinUntilMessage();
+
+  ASSERT_FALSE(received_messages_.empty());
+  EXPECT_TRUE(received_messages_.back().value);
+}
+
+TEST_F(DepartureButtonLampManagerTest, LampOffWhenAutonomousMode)
+{
+  received_messages_.clear();
+
+  publishRoute(true);
+  publishOperationMode(true, false, OperationModeState::AUTONOMOUS);
+  publishState(RouteState::SET);
+
+  spinUntilMessage();
+
+  ASSERT_FALSE(received_messages_.empty());
+  EXPECT_TRUE(received_messages_.back().value);
 }
