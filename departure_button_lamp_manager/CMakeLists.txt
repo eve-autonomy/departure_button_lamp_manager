@@ -42,7 +42,7 @@ rclcpp_components_register_node(departure_button_lamp_manager
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
   find_package(rclcpp REQUIRED)
-  find_package(autoware_state_machine_msgs REQUIRED)
+  # find_package(autoware_state_machine_msgs REQUIRED)
   find_package(dio_ros_driver REQUIRED)
 
   ament_add_gtest(test_departure_button_lamp_manager
