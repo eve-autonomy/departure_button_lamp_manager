@@ -42,23 +42,27 @@ rclcpp_components_register_node(departure_button_lamp_manager
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
   find_package(rclcpp REQUIRED)
-  find_package(autoware_state_machine_msgs REQUIRED)
+  # find_package(autoware_state_machine_msgs REQUIRED)
   find_package(dio_ros_driver REQUIRED)
 
   ament_add_gtest(test_departure_button_lamp_manager
     test/test_departure_button_lamp_manager.cpp)
   target_link_libraries(test_departure_button_lamp_manager
     departure_button_lamp_manager rclcpp::rclcpp)
+  # ament_target_dependencies(test_departure_button_lamp_manager
+  #   autoware_state_machine_msgs dio_ros_driver)
   ament_target_dependencies(test_departure_button_lamp_manager
-    autoware_state_machine_msgs dio_ros_driver)
+    dio_ros_driver)
 endif()
 
+# ament_export_dependencies(
+#   autoware_state_machine_msgs dio_ros_driver
+#   )
 ament_export_dependencies(
-  autoware_state_machine_msgs dio_ros_driver
+  dio_ros_driver
   )
 
 
 ament_auto_package(INSTALL_TO_SHARE
   launch
 )
-

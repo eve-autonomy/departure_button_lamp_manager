@@ -24,14 +24,11 @@
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
-  <depend>rclcpp</depend>
-  <depend>dio_ros_driver</depend>
-  <depend>autoware_state_machine_msgs</depend>
-  <depend>rclcpp_components</depend>
   <depend>autoware_adapi_v1_msgs</depend>
-  <depend>eve_cmd_gate_msgs</depend>
- 
   <depend>builtin_interfaces</depend>
+  <depend>dio_ros_driver</depend>
+  <depend>rclcpp</depend>
+  <depend>rclcpp_components</depend>
 
   <export>
     <build_type>ament_cmake</build_type>

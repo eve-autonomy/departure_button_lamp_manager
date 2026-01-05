@@ -13,6 +13,7 @@
 // limitations under the License
 
 #include <departure_button_lamp_manager/departure_button_lamp_manager.hpp>
+
 #include <fstream>
 
 namespace departure_button_lamp_manager
@@ -36,10 +37,6 @@ DepartureButtonLampManager::DepartureButtonLampManager(
     "/api/operation_mode/state", rclcpp::QoS(1).transient_local(),
     std::bind(&DepartureButtonLampManager::onOperationModeState, this, std::placeholders::_1));
 
-  sub_autonomous_driving_start_button_ = this->create_subscription<AutonomousDrivingStartButton>(
-    "/eve_cmd_gate/engage_request_state",rclcpp::QoS(1).transient_local(),
-    std::bind(&DepartureButtonLampManager::onAutonomousDrivingStartButton, this, std::placeholders::_1)); 
-
   // publisher
   pub_departure_button_lamp_ = this->create_publisher<dio_ros_driver::msg::DIOPort>(
     "button_lamp_out", rclcpp::QoS{3}.transient_local());
@@ -47,7 +44,10 @@ DepartureButtonLampManager::DepartureButtonLampManager(
   active_polarity_ = ACTIVE_POLARITY;
 }
 
-DepartureButtonLampManager::~DepartureButtonLampManager() { publishLampState(false); }
+DepartureButtonLampManager::~DepartureButtonLampManager()
+{
+  publishLampState(false);
+}
 
 void DepartureButtonLampManager::onState(const RouteState::ConstSharedPtr msg)
 {
@@ -63,19 +63,11 @@ void DepartureButtonLampManager::onRoute(const Route::ConstSharedPtr msg)
 
 void DepartureButtonLampManager::onOperationModeState(const OperationModeState::ConstSharedPtr msg)
 {
-  is_autoware_control_ = msg ->is_autoware_control_enabled;
-  is_in_transition_ = msg ->is_in_transition;
-  mode_ = msg ->mode;
+  is_autoware_control_ = msg->is_autoware_control_enabled;
+  is_in_transition_ = msg->is_in_transition;
+  mode_ = msg->mode;
   lampManager();
 }
-
-void DepartureButtonLampManager::onAutonomousDrivingStartButton(const AutonomousDrivingStartButton::ConstSharedPtr msg)
-{
-  is_accept_ = msg ->is_engage_accepted;
-  is_request_ = msg ->is_engage_requesting;
-  lampManager();
-}
-
 
 void DepartureButtonLampManager::publishLampState(const bool value)
 {
@@ -87,21 +79,11 @@ void DepartureButtonLampManager::publishLampState(const bool value)
 
 void DepartureButtonLampManager::lampManager()
 {
-  bool autoDrigingReadyForDeparture_flg = false;
-  if (state_ == autoware_adapi_v1_msgs::msg::RouteState::SET) {
-    if (route_.data.size() != 0) {
-      if (is_autoware_control_ && !is_in_transition_ && mode_ != OperationModeState::AUTONOMOUS ) {
-          if (!is_accept_ && !is_request_) {
-            autoDrigingReadyForDeparture_flg = true;
-          }
-      }
-    }
-  }
-  if (autoDrigingReadyForDeparture_flg) {
-    publishLampState(true);
-  } else {
-    publishLampState(false);
-  }
+  const bool is_ready = state_ == autoware_adapi_v1_msgs::msg::RouteState::SET &&
+                        !route_.data.empty() && is_autoware_control_ && !is_in_transition_ &&
+                        mode_ != OperationModeState::AUTONOMOUS;
+
+  publishLampState(is_ready);
 }
 }  // namespace departure_button_lamp_manager
 
