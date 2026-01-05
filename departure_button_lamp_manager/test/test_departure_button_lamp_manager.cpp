@@ -12,15 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License
 
+#include "departure_button_lamp_manager/departure_button_lamp_manager.hpp"
+
+#include <dio_ros_driver/msg/dio_port.hpp>
+#include <rclcpp/rclcpp.hpp>
+
+#include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
+#include <autoware_adapi_v1_msgs/msg/route.hpp>
+#include <autoware_adapi_v1_msgs/msg/route_state.hpp>
+
 #include <gtest/gtest.h>
 
-#include <rclcpp/rclcpp.hpp>
-#include <dio_ros_driver/msg/dio_port.hpp>
-#include <autoware_adapi_v1_msgs/msg/route_state.hpp>
-#include <autoware_adapi_v1_msgs/msg/route.hpp>
-#include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
-
-#include "departure_button_lamp_manager/departure_button_lamp_manager.hpp"
+#include <memory>
+#include <vector>
 
 using RouteState = autoware_adapi_v1_msgs::msg::RouteState;
 using Route = autoware_adapi_v1_msgs::msg::Route;
@@ -40,7 +44,8 @@ protected:
 
     pub_route_state_ = node_->create_publisher<RouteState>("/api/routing/state", qos);
     pub_route_ = node_->create_publisher<Route>("/api/routing/route", qos);
-    pub_operation_mode_ = node_->create_publisher<OperationModeState>("/api/operation_mode/state", qos);
+    pub_operation_mode_ =
+      node_->create_publisher<OperationModeState>("/api/operation_mode/state", qos);
 
     sub_ = node_->create_subscription<DIOPort>(
       "button_lamp_out", qos,

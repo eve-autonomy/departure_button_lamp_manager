@@ -19,15 +19,15 @@
 #include "rclcpp/rclcpp.hpp"
 
 // sub input
-#include "autoware_adapi_v1_msgs/msg/route_state.hpp"
-#include "autoware_adapi_v1_msgs/msg/route.hpp"
 #include "autoware_adapi_v1_msgs/msg/operation_mode_state.hpp"
+#include "autoware_adapi_v1_msgs/msg/route.hpp"
+#include "autoware_adapi_v1_msgs/msg/route_state.hpp"
 
 namespace departure_button_lamp_manager
 {
-  using RouteState = autoware_adapi_v1_msgs::msg::RouteState;
-  using Route = autoware_adapi_v1_msgs::msg::Route;
-  using OperationModeState = autoware_adapi_v1_msgs::msg::OperationModeState;
+using RouteState = autoware_adapi_v1_msgs::msg::RouteState;
+using Route = autoware_adapi_v1_msgs::msg::Route;
+using OperationModeState = autoware_adapi_v1_msgs::msg::OperationModeState;
 
 class DepartureButtonLampManager : public rclcpp::Node
 {
@@ -56,7 +56,7 @@ private:
   void publishLampState(const bool value);
   void lampManager();
 
-  //member variables
+  // member variables
   uint16_t state_;
   Route route_;
   uint8_t mode_;

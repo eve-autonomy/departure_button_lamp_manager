@@ -13,6 +13,7 @@
 // limitations under the License
 
 #include <departure_button_lamp_manager/departure_button_lamp_manager.hpp>
+
 #include <fstream>
 
 namespace departure_button_lamp_manager
@@ -43,7 +44,10 @@ DepartureButtonLampManager::DepartureButtonLampManager(
   active_polarity_ = ACTIVE_POLARITY;
 }
 
-DepartureButtonLampManager::~DepartureButtonLampManager() { publishLampState(false); }
+DepartureButtonLampManager::~DepartureButtonLampManager()
+{
+  publishLampState(false);
+}
 
 void DepartureButtonLampManager::onState(const RouteState::ConstSharedPtr msg)
 {
@@ -59,9 +63,9 @@ void DepartureButtonLampManager::onRoute(const Route::ConstSharedPtr msg)
 
 void DepartureButtonLampManager::onOperationModeState(const OperationModeState::ConstSharedPtr msg)
 {
-  is_autoware_control_ = msg ->is_autoware_control_enabled;
-  is_in_transition_ = msg ->is_in_transition;
-  mode_ = msg ->mode;
+  is_autoware_control_ = msg->is_autoware_control_enabled;
+  is_in_transition_ = msg->is_in_transition;
+  mode_ = msg->mode;
   lampManager();
 }
 
@@ -75,12 +79,9 @@ void DepartureButtonLampManager::publishLampState(const bool value)
 
 void DepartureButtonLampManager::lampManager()
 {
-  const bool is_ready =
-    state_ == autoware_adapi_v1_msgs::msg::RouteState::SET &&
-    !route_.data.empty() &&
-    is_autoware_control_ &&
-    !is_in_transition_ &&
-    mode_ != OperationModeState::AUTONOMOUS;
+  const bool is_ready = state_ == autoware_adapi_v1_msgs::msg::RouteState::SET &&
+                        !route_.data.empty() && is_autoware_control_ && !is_in_transition_ &&
+                        mode_ != OperationModeState::AUTONOMOUS;
 
   publishLampState(is_ready);
 }
