@@ -49,12 +49,17 @@ if(BUILD_TESTING)
     test/test_departure_button_lamp_manager.cpp)
   target_link_libraries(test_departure_button_lamp_manager
     departure_button_lamp_manager rclcpp::rclcpp)
+  # ament_target_dependencies(test_departure_button_lamp_manager
+  #   autoware_state_machine_msgs dio_ros_driver)
   ament_target_dependencies(test_departure_button_lamp_manager
-    autoware_state_machine_msgs dio_ros_driver)
+    dio_ros_driver)
 endif()
 
+# ament_export_dependencies(
+#   autoware_state_machine_msgs dio_ros_driver
+#   )
 ament_export_dependencies(
-  autoware_state_machine_msgs dio_ros_driver
+  dio_ros_driver
   )
 
 
